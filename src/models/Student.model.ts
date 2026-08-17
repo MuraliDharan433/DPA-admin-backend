@@ -18,6 +18,20 @@ export interface ICompletedModule {
   completedAt: Date;
 }
 
+export interface IFeePayment {
+  amount: number;
+  /** Which instalment this covers, e.g. "Term 1" / "Admission fee". */
+  term?: string;
+  /** Which account received the money, e.g. "HDFC Bank", "Cash", "UPI". */
+  account?: string;
+  /** When the student actually paid. */
+  paymentDate: Date;
+  notes?: string;
+  /** Who entered this payment, and when they entered it. */
+  recordedBy: Types.ObjectId;
+  recordedAt: Date;
+}
+
 export interface IStudent extends Document {
   studentId: string;
   firstName: string;
@@ -52,6 +66,9 @@ export interface IStudent extends Document {
   totalYearsExperience?: number;
   pfStatus?: boolean;
   workHistory: IWorkHistoryEntry[];
+  /** Agreed course fee for this student; individual payments live in feePayments. */
+  totalFees?: number;
+  feePayments: IFeePayment[];
   placementStatus: PlacementStatus;
   currentCompany?: string;
   jobTitle?: string;
@@ -88,6 +105,17 @@ const completedModuleSchema = new Schema<ICompletedModule>(
   },
   { _id: false },
 );
+
+// Keeps its own _id so a single mistaken payment entry can be deleted by id.
+const feePaymentSchema = new Schema<IFeePayment>({
+  amount: { type: Number, required: true, min: 0 },
+  term: { type: String, trim: true },
+  account: { type: String, trim: true },
+  paymentDate: { type: Date, required: true },
+  notes: { type: String, trim: true },
+  recordedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  recordedAt: { type: Date, required: true, default: () => new Date() },
+});
 
 const studentSchema = new Schema<IStudent>(
   {
@@ -130,6 +158,9 @@ const studentSchema = new Schema<IStudent>(
     totalYearsExperience: Number,
     pfStatus: Boolean,
     workHistory: { type: [workHistoryEntrySchema], default: [] },
+
+    totalFees: Number,
+    feePayments: { type: [feePaymentSchema], default: [] },
 
     placementStatus: {
       type: String,

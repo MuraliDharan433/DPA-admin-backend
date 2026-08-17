@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import { auditLogService } from '../services/auditLog.service';
+import { writeAuditLog } from '../features/auditLog';
 import type { AuditAction } from '../constants/enums.constant';
 
 /**
@@ -22,7 +22,7 @@ export function audit(action: AuditAction, module: string) {
       const body = capturedBody as { data?: { _id?: string; id?: string } } | undefined;
       const recordId = req.params?.id || body?.data?._id || body?.data?.id;
 
-      void auditLogService.log({
+      void writeAuditLog({
         userId: req.user?.userId,
         action,
         module,
