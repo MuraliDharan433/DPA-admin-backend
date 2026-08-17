@@ -34,6 +34,10 @@ export const PERMISSIONS = {
   MOCK_EDIT: 'mock.edit',
   MOCK_DELETE: 'mock.delete',
 
+  /** Deleting a recorded fee payment rewrites the money trail, so it is deliberately granted
+   *  to no role by default - Owner holds it implicitly and assigns it per-user when needed. */
+  FEES_DELETE: 'fees.delete',
+
   USERS_VIEW: 'users.view',
   USERS_CREATE: 'users.create',
   USERS_EDIT: 'users.edit',
@@ -110,6 +114,10 @@ export const PERMISSION_GROUPS: Record<
       { key: PERMISSIONS.RESUMES_UPLOAD, label: 'Upload' },
       { key: PERMISSIONS.RESUMES_DELETE, label: 'Delete' },
     ],
+  },
+  fees: {
+    label: 'Fees',
+    actions: [{ key: PERMISSIONS.FEES_DELETE, label: 'Delete Payment' }],
   },
   mock: {
     label: 'Mock Sessions',

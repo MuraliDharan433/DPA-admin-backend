@@ -281,7 +281,7 @@ router.post(
 
 router.delete(
   '/:id/fee-payments/:paymentId',
-  requirePermissions(PERMISSIONS.STUDENTS_EDIT),
+  requirePermissions(PERMISSIONS.FEES_DELETE),
   asyncHandler(async (req, res) => {
     const student = await getStudentOrFail(req.params.id);
     const before = student.feePayments.length;

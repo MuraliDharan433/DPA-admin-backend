@@ -1,0 +1,62 @@
+# Render deployment for the Institute Management API.
+#
+# Why Render and not Vercel: this is a long-running Express server that also holds
+# Socket.IO connections open and writes uploaded resumes to disk. Vercel's serverless
+# functions are torn down after each request, so neither of those can work there.
+#
+# Deploy: push this file to your repo, then in Render choose "New +" -> "Blueprint"
+# and point it at the repo. Set the `sync: false` values in the dashboard.
+
+services:
+  - type: web
+    name: dpa-admin-backend
+    runtime: node
+    plan: free
+    region: singapore # closest to India; change if your users are elsewhere
+    # No rootDir: this backend is its own repo (DPA-admin-backend), so the repo root is
+    # already this folder. Only add rootDir if you later move it into a single monorepo.
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      # Render injects PORT itself; env.ts already reads process.env.PORT.
+
+      # --- secrets: set these in the Render dashboard, never commit them ---
+      - key: MONGODB_URI
+        sync: false
+
+      # Generated once by Render and kept stable across deploys. These MUST be set in
+      # production - env.ts falls back to well-known dev defaults otherwise, which would
+      # let anyone forge a valid admin token.
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: COOKIE_SECRET
+        generateValue: true
+
+      # --- CORS: the browser origins allowed to call this API ---
+      # Must be the exact scheme+host, no trailing slash.
+      - key: FRONTEND_URL
+        sync: false # e.g. https://your-admin.vercel.app
+      - key: PUBLIC_WEBSITE_URL
+        sync: false # comma-separated; your public institute site, if any
+
+      # --- first-run owner account (change the password after first login) ---
+      - key: SEED_OWNER_EMAIL
+        sync: false
+      - key: SEED_OWNER_PASSWORD
+        sync: false
+
+      # --- resume storage ---
+      # 'local' writes to the container filesystem, which Render's free plan wipes on every
+      # deploy and restart - uploaded resumes will not survive. See DEPLOY.md for the two
+      # ways to fix this.
+      - key: STORAGE_PROVIDER
+        value: local
+      - key: STORAGE_LOCAL_DIR
+        value: /var/data/uploads
